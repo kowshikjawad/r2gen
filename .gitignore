@@ -143,3 +143,16 @@ cython_debug/
 # Data
 data/iu_xray/
 data/mimic_cxr/
+
+# Results and checkpoints
+results/
+*.pth
+
+# IDE and System Files
+.vscode/
+*.code-workspace
+.DS_Store
+Thumbs.db
+*.log
+*.sqlite
+*.sqlite3

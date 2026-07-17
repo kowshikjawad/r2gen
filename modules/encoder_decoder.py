@@ -51,7 +51,7 @@ class Transformer(nn.Module):
 
     def decode(self, hidden_states, src_mask, tgt, tgt_mask):
         memory = self.rm.init_memory(hidden_states.size(0)).to(hidden_states)
-        memory = self.rm(self.tgt_embed(tgt), memory)
+        memory = self.rm(self.tgt_embed(tgt), memory, visual_feats=hidden_states, visual_mask=src_mask)
         return self.decoder(self.tgt_embed(tgt), hidden_states, src_mask, tgt_mask, memory)
 
 
@@ -252,6 +252,7 @@ class RelationalMemory(nn.Module):
         self.d_model = d_model
 
         self.attn = MultiHeadedAttention(num_heads, d_model)
+        self.visual_attn = MultiHeadedAttention(num_heads, d_model)
         self.mlp = nn.Sequential(nn.Linear(self.d_model, self.d_model),
                                  nn.ReLU(),
                                  nn.Linear(self.d_model, self.d_model),
@@ -271,8 +272,12 @@ class RelationalMemory(nn.Module):
 
         return memory
 
-    def forward_step(self, input, memory):
+    def forward_step(self, input, memory, visual_feats=None, visual_mask=None):
         memory = memory.reshape(-1, self.num_slots, self.d_model)
+        # NEW: vision-grounding step
+        if visual_feats is not None:
+            memory = memory + self.visual_attn(memory, visual_feats, visual_feats, visual_mask)
+
         q = memory
         k = torch.cat([memory, input.unsqueeze(1)], 1)
         v = torch.cat([memory, input.unsqueeze(1)], 1)
@@ -290,10 +295,10 @@ class RelationalMemory(nn.Module):
 
         return next_memory
 
-    def forward(self, inputs, memory):
+    def forward(self, inputs, memory, visual_feats=None, visual_mask=None):
         outputs = []
         for i in range(inputs.shape[1]):
-            memory = self.forward_step(inputs[:, i], memory)
+            memory = self.forward_step(inputs[:, i], memory, visual_feats=visual_feats, visual_mask=visual_mask)
             outputs.append(memory)
         outputs = torch.stack(outputs, dim=1)
 
