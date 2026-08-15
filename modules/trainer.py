@@ -199,8 +199,6 @@ class Trainer(BaseTrainer):
             loss.backward()
             torch.nn.utils.clip_grad_value_(self.model.parameters(), 0.1)
             self.optimizer.step()
-            if batch_idx >= 1:
-                break
         log = {'train_loss': train_loss / len(self.train_dataloader)}
 
         self.model.eval()
@@ -214,8 +212,6 @@ class Trainer(BaseTrainer):
                 ground_truths = self.model.tokenizer.decode_batch(reports_ids[:, 1:].cpu().numpy())
                 val_res.extend(reports)
                 val_gts.extend(ground_truths)
-                if batch_idx >= 1:
-                    break
             val_met = self.metric_ftns({i: [gt] for i, gt in enumerate(val_gts)},
                                        {i: [re] for i, re in enumerate(val_res)})
             log.update(**{'val_' + k: v for k, v in val_met.items()})
@@ -231,8 +227,6 @@ class Trainer(BaseTrainer):
                 ground_truths = self.model.tokenizer.decode_batch(reports_ids[:, 1:].cpu().numpy())
                 test_res.extend(reports)
                 test_gts.extend(ground_truths)
-                if batch_idx >= 1:
-                    break
             test_met = self.metric_ftns({i: [gt] for i, gt in enumerate(test_gts)},
                                         {i: [re] for i, re in enumerate(test_res)})
             log.update(**{'test_' + k: v for k, v in test_met.items()})
