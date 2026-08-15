@@ -33,16 +33,15 @@ def compute_scores(gts, res):
     # Compute score for each metric
     for scorer, method in scorers:
         try:
-            score, scores = scorer.compute_score(gts, res, verbose=0)
-        except TypeError:
             try:
+                score, scores = scorer.compute_score(gts, res, verbose=0)
+            except TypeError:
                 score, scores = scorer.compute_score(gts, res)
-            except Exception as e:
-                print("Warning: Failed to compute score for {}: {}".format(method, e))
-                continue
         except Exception as e:
-            print("Warning: Failed to compute score for {}: {}".format(method, e))
+            if method != "METEOR":
+                print("Warning: Failed to compute score for {}: {}".format(method, e))
             continue
+
         if type(method) == list:
             for sc, m in zip(score, method):
                 eval_res[m] = sc
