@@ -127,6 +127,8 @@ class BaseTrainer(object):
         return device, list_ids
 
     def _save_checkpoint(self, epoch, save_best=False):
+        import shutil
+        import tempfile
         state = {
             'epoch': epoch,
             'state_dict': self.model.state_dict(),
@@ -134,12 +136,17 @@ class BaseTrainer(object):
             'monitor_best': self.mnt_best
         }
         filename = os.path.join(self.checkpoint_dir, 'current_checkpoint.pth')
-        torch.save(state, filename)
-        print("Saving checkpoint: {} ...".format(filename))
+        with tempfile.NamedTemporaryFile(suffix='.pth', delete=False) as tmp:
+            tmp_path = tmp.name
+        torch.save(state, tmp_path)
+        shutil.copyfile(tmp_path, filename)
         if save_best:
             best_path = os.path.join(self.checkpoint_dir, 'model_best.pth')
-            torch.save(state, best_path)
+            shutil.copyfile(tmp_path, best_path)
             print("Saving current best: model_best.pth ...")
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        print("Saving checkpoint: {} ...".format(filename))
 
     def _resume_checkpoint(self, resume_path):
         resume_path = str(resume_path)

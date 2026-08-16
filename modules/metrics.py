@@ -19,10 +19,14 @@ def compute_scores(gts, res):
     except Exception as e:
         print("Warning: Failed to initialize BLEU scorer:", e)
 
-    try:
-        scorers.append((Meteor(), "METEOR"))
-    except (FileNotFoundError, Exception) as e:
-        print("Warning: METEOR scorer initialization failed (possibly because Java is not installed or not in PATH). Skipping METEOR metric. Error:", e)
+    import shutil
+    if shutil.which('java') is not None:
+        try:
+            scorers.append((Meteor(), "METEOR"))
+        except (FileNotFoundError, Exception) as e:
+            print("Warning: METEOR scorer initialization failed. Skipping METEOR metric. Error:", e)
+    else:
+        print("Warning: Java is not found in PATH. Skipping METEOR metric to avoid subprocess hanging.")
 
     try:
         scorers.append((Rouge(), "ROUGE_L"))
