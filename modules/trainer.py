@@ -204,6 +204,7 @@ class Trainer(BaseTrainer):
                     epoch, self.epochs, batch_idx + 1, len(self.train_dataloader), train_loss / (batch_idx + 1)))
         log = {'train_loss': train_loss / len(self.train_dataloader)}
 
+        print('Evaluating on validation set...')
         self.model.eval()
         with torch.no_grad():
             val_gts, val_res = [], []
@@ -215,10 +216,13 @@ class Trainer(BaseTrainer):
                 ground_truths = self.model.tokenizer.decode_batch(reports_ids[:, 1:].cpu().numpy())
                 val_res.extend(reports)
                 val_gts.extend(ground_truths)
+                if (batch_idx + 1) % 5 == 0 or (batch_idx + 1) == len(self.val_dataloader):
+                    print('Val Step [{}/{}]'.format(batch_idx + 1, len(self.val_dataloader)))
             val_met = self.metric_ftns({i: [gt] for i, gt in enumerate(val_gts)},
                                        {i: [re] for i, re in enumerate(val_res)})
             log.update(**{'val_' + k: v for k, v in val_met.items()})
 
+        print('Evaluating on test set...')
         self.model.eval()
         with torch.no_grad():
             test_gts, test_res = [], []
@@ -230,6 +234,8 @@ class Trainer(BaseTrainer):
                 ground_truths = self.model.tokenizer.decode_batch(reports_ids[:, 1:].cpu().numpy())
                 test_res.extend(reports)
                 test_gts.extend(ground_truths)
+                if (batch_idx + 1) % 5 == 0 or (batch_idx + 1) == len(self.test_dataloader):
+                    print('Test Step [{}/{}]'.format(batch_idx + 1, len(self.test_dataloader)))
             test_met = self.metric_ftns({i: [gt] for i, gt in enumerate(test_gts)},
                                         {i: [re] for i, re in enumerate(test_res)})
             log.update(**{'test_' + k: v for k, v in test_met.items()})
