@@ -199,6 +199,9 @@ class Trainer(BaseTrainer):
             loss.backward()
             torch.nn.utils.clip_grad_value_(self.model.parameters(), 0.1)
             self.optimizer.step()
+            if (batch_idx + 1) % 10 == 0 or (batch_idx + 1) == len(self.train_dataloader):
+                print('Epoch [{}/{}] Step [{}/{}] Loss: {:.4f}'.format(
+                    epoch, self.epochs, batch_idx + 1, len(self.train_dataloader), train_loss / (batch_idx + 1)))
         log = {'train_loss': train_loss / len(self.train_dataloader)}
 
         self.model.eval()
